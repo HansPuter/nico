@@ -1,11 +1,14 @@
 #!/usr/bin/perl
-  
+
+BEGIN { push @INC, '/home/peter/perl5/lib/perl5/'; }
+
 # Modules used
 use strict;
 use warnings;
 
 use Term::ReadKey;
 use AtExit;
+use Switch;
 
 use constant { true => 1, false => 0 };
 
@@ -46,6 +49,35 @@ sub CTRL_KEY
 	return ord($p) & 0x1f;
 }
 
+sub editorReadKey 
+{
+	my $key = "";
+	while (not defined ($key = ReadKey(0))) {
+	}
+
+  	return $key;
+}
+
+sub editorProcessKeypress 
+{
+  	my $key = editorReadKey;
+  	my $keyno = ord($key);
+  	switch ($keyno) {
+		case (CTRL_KEY("q")) {	# Crtl-Q quits
+			die "1: quit pressed!\r\n";
+		}
+		else {
+			print "?$keyno ";
+		}
+  	}
+}
+
+sub editorRefreshScreen 
+{
+  print "\x1b[2J";
+  print "\x1b[H";
+}
+
 ###############################################################################
 # MAIN
 ###############################################################################
@@ -57,25 +89,9 @@ sub main
     my $scope2 = AtExit->new;
     $scope2->atexit( \&disableRawMode);
 	
-	my $key = "";
-
-	while ($key = ReadKey(0)) {
-		if (not defined $key) {
-			print ".";
-			continue;
-		}
-
-		if (ord($key) == CTRL_KEY("q")) {	# Crtl-Q quits
-			die "quit pressed!\r\n";
-		}
-
-    	if (iscntrl($key)) {
-      		print "^"; print ord($key);
-      		print " $key\r\n";
-    	} else {
-      		print ord($key);
-      		print " ('$key')"; print "\r\n";
-    	}
+	while (true) {
+		editorRefreshScreen();
+		editorProcessKeypress();
 	}
 
 }
